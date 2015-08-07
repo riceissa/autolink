@@ -7,7 +7,7 @@ import requests
 import urllib3
 from tld import get_tld
 from bs4 import BeautifulSoup
-from html import escape as html_escape
+import html
 
 def main():
     # See https://blog.quora.com/Launched-Customizable-Links for Quora's launch post
@@ -137,6 +137,7 @@ def get_filetype_link(link_text, url, filetype):
         # From http://pandoc.org/README.html#backslash-escapes
         special_chars = "\\`*_{}[]()>#+-.!"
         result = ""
+        link_text = html.unescape(link_text)
         for c in link_text:
             if c in special_chars:
                 result += "\\" + c
@@ -144,8 +145,8 @@ def get_filetype_link(link_text, url, filetype):
                 result += c
         return "[{link_text}]({url})".format(link_text=result, url=url)
     if filetype == "html":
-        return '<a href="{url}">{link_text}</a>'.format(url=url, link_text=html_escape(link_text))
-    if filetype = "mediawiki":
+        return '<a href="{url}">{link_text}</a>'.format(url=url, link_text=html.escape(link_text))
+    if filetype == "mediawiki":
         return "[{url} {link_text}]".format(url=url, link_text=link_text)
 
 def escape_special_chars(string):
