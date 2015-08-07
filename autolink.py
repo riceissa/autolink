@@ -7,6 +7,7 @@ import requests
 import urllib3
 from tld import get_tld
 from bs4 import BeautifulSoup
+from html import escape as html_escape
 
 def main():
     # See https://blog.quora.com/Launched-Customizable-Links for Quora's launch post
@@ -121,22 +122,36 @@ def messy_title_parse(title):
         result = colon_split[-1]
     return result
 
-def get_markdown_link(link_text, url):
-    return "[{link_text}]({url})".format(link_text=escape_special_chars(link_text), url=url)
+def get_filetype_link(link_text, url, filetype):
+    """
+
+    Args:
+        link_text: A string representing the displayed or linked text when
+            linking to something, e.g. "hello" in <a
+            href="http://example.org">hello<a>.
+        url: A string of the URL.
+        filetype: A string of the output filetype. Accepted parameters are:
+            "html", "markdown", "latex".
+    """
+    if filetype == "markdown":
+        # From http://pandoc.org/README.html#backslash-escapes
+        special_chars = "\\`*_{}[]()>#+-.!"
+        result = ""
+        for c in link_text:
+            if c in special_chars:
+                result += "\\" + c
+            else:
+                result += c
+        return "[{link_text}]({url})".format(link_text=result, url=url)
+    if filetype == "html":
+        return '<a href="{url}">{link_text}</a>'.format(url=url, link_text=html_escape(link_text))
+    if filetype = "mediawiki":
+        return "[{url} {link_text}]".format(url=url, link_text=link_text)
 
 def escape_special_chars(string):
     '''
     Escape special characters for Pandoc markdown.
     '''
-    # From http://pandoc.org/README.html#backslash-escapes
-    special_chars = "\\`*_{}[]()>#+-.!"
-    result = ""
-    for c in string:
-        if c in special_chars:
-            result += "\\" + c
-        else:
-            result += c
-    return result
 
 if __name__ == "__main__":
     main()
