@@ -58,3 +58,5 @@ target/
 
 # Vim
 *.swp
+
+test_html
