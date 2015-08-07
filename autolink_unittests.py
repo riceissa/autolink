@@ -1,19 +1,12 @@
 import unittest
 import autolink as al
+from generate_test_html import TEST_CASES
 
-class TestLinks(unittest.TestCase):
+class TestGetFiletypeLink(unittest.TestCase):
+  def test_one(self):
+      self.assertEqual(al.get_filetype_link("The Biodeterminist&#39;s Guide to Parenting", "http://issarice.com", "markdown"), "[The Biodeterminist's Guide to Parenting](http://issarice.com)")
+      self.assertEqual(al.get_filetype_link("something.dotcom", "https://google.com/", "markdown"), "[something\.dotcom](https://google.com/)")
+      self.assertEqual(al.get_filetype_link("Issa Rice | Issa Rice", "https://google.com/", "markdown"), "[Issa Rice | Issa Rice](https://google.com/)")
 
-  def test_upper(self):
-      self.assertEqual('foo'.upper(), 'FOO')
-
-  def test_isupper(self):
-      self.assertTrue('FOO'.isupper())
-      self.assertFalse('Foo'.isupper())
-
-  def test_split(self):
-      s = 'hello world'
-      self.assertEqual(s.split(), ['hello', 'world'])
-      # check that s.split fails when the separator is not a string
-      with self.assertRaises(TypeError):
-          s.split(2)
-
+if __name__ == "__main__":
+    unittest.main()
