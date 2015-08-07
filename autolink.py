@@ -42,9 +42,9 @@ def try_url(url):
             # <title> is probably in the first around 10MB
             doc = response.iter_content(chunk_size=10000)
             data = next(doc)
-            result["text"] = get_markdown_link(get_link_text(url, response.headers["content-type"], data=data), url)
+            result["text"] = get_filetype_link(get_link_text(url, response.headers["content-type"], data=data), url, "markdown")
         else:
-            result["text"] = get_markdown_link(get_link_text(url, response.headers["content-type"]), url)
+            result["text"] = get_filetype_link(get_link_text(url, response.headers["content-type"]), url, "markdown")
         result["exit"] = True
     except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidSchema, urllib3.exceptions.LocationParseError):
         result["text"] = "[{url}]({url})".format(url=url)
