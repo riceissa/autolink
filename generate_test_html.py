@@ -20,6 +20,7 @@ TEST_CASES = [
     (None, "Code of Federal Regulations | HHS.gov", None, "Issa Rice"),
     (None, "Jackdaws love my big sphinx of quartz - The Biodeterminist's Guide to Parenting - and one more", None, "Issa Rice"),
     (None, "Jackdaws love my big sphinx of quartz - The Biodeterminist's Guide to Parenting - and one more", None, "Issa Rice"),
+    (None, "20.1. html — HyperText Markup Language support &mdash; Python 3.4.3 documentation", None, "a"),
 ]
 
 def main():
