@@ -147,7 +147,7 @@ def get_link_text(url, mime_type, data=None):
             if possible:
                 result = possible[0].strip()
             elif soup.title.string:
-                result = messy_title_parse(soup.title.string)
+                result = messy_title_parse(html.unescape(soup.title.string))
             else:
                 result = "Page on " + tld
         except AttributeError:
