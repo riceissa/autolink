@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import io
 import logging
 import sys
 import requests
@@ -10,6 +11,7 @@ import tld
 from tld import get_tld
 from bs4 import BeautifulSoup
 import html
+from PyPDF2 import PdfFileReader, PdfFileWriter
 
 def main():
     # See https://blog.quora.com/Launched-Customizable-Links for Quora's launch post
@@ -49,10 +51,10 @@ def try_url(url):
         headers = {"User-Agent": user_agent}
         response = requests.get(url, stream=True, headers=headers)
         url = response.url
-        if  "text/html" in response.headers["content-type"]:
-            logging.debug("HTML page detected")
+        if  "text/html" in response.headers["content-type"] or "application/pdf" in response.headers["content-type"]:
+            logging.debug("HTML page or PDF file detected")
             # <title> is probably in the first around 10MB
-            doc = response.iter_content(chunk_size=10000)
+            doc = response.iter_content(chunk_size=1000000)
             data = next(doc)
             result["text"] = get_filetype_link(
                 get_link_text(url, response.headers["content-type"], data=data),
@@ -139,8 +141,14 @@ def get_link_text(url, mime_type, data=None):
     result = "File on " + tld
     if mime_type.startswith("image"):
         result = "Image on " + tld
-    elif mime_type == "application/pdf":
-        result = "PDF on " + tld
+    elif  "application/pdf" in mime_type:
+        logging.debug("PDF detected")
+        data = io.BytesIO(data)
+        pdf = PdfFileReader(data)
+        if pdf.isEncrypted:
+            pdf.decrypt('')
+        result = pdf.getDocumentInfo().title
+        #result = "PDF on " + tld
     elif "text/html" in mime_type:
         try:
             soup = BeautifulSoup(data, 'html.parser')
