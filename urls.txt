@@ -26,3 +26,5 @@ https://en.wikipedia.org/wiki/Special:Contributions/Simfish
 https://en.wikipedia.org/w/index.php?title=Sasha_Petraske&diff=prev&oldid=677223978
 http://www.gwern.net/
 http://predictionbook.com/predictions/8161
+https://www.reddit.com/r/Python/comments/qsvfm/pypdf2_updates_pypdf_pypdf2_is_an_opensource/
+https://docs.google.com/document/d/1XSA5K8fvuP-RP7cjvLrfytG18mLJTUxSngWvcyhPwTc/edit
