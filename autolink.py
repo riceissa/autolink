@@ -143,8 +143,16 @@ def get_link_text(url, mime_type, data=None):
         result = "Image on " + tld
     elif  "application/pdf" in mime_type:
         logging.debug("PDF detected")
+        # I need seek() for some reason so convert from bytes
         data = io.BytesIO(data)
-        pdf = PdfFileReader(data)
+        # fix this later, but I always get a "PdfReadWarning: Xref table
+        # not zero-indexed" which should only happen when the -v flag is
+        # present
+        import warnings
+        warnings.filterwarnings("ignore")
+        pdf = PdfFileReader(data, strict=True)
+        # PyPDF2 somehow thinks many PDFs are encrypted with the empty
+        # string, so deal with that
         if pdf.isEncrypted:
             pdf.decrypt('')
         result = pdf.getDocumentInfo().title
