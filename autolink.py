@@ -50,6 +50,7 @@ def try_url(url):
         response = requests.get(url, stream=True, headers=headers)
         url = response.url
         if  "text/html" in response.headers["content-type"]:
+            logging.debug("HTML page detected")
             # <title> is probably in the first around 10MB
             doc = response.iter_content(chunk_size=10000)
             data = next(doc)
@@ -59,6 +60,7 @@ def try_url(url):
                 "markdown"
             )
         else:
+            logging.debug("No HTML page detected")
             result["text"] = get_filetype_link(
                 get_link_text(url, response.headers["content-type"]),
                 url,
@@ -162,6 +164,7 @@ def get_link_text(url, mime_type, data=None):
 def messy_title_parse(title, url=None):
     # Even if nothing works, at least we'll have a whitespace-sanitized
     # title
+    logging.debug("Cleaning messy title")
     result = title.strip()
     hyphen_split = result.split(" - ")
     bar_split = result.split(" | ")
