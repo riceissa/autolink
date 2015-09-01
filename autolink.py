@@ -14,7 +14,8 @@ import html
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
 def main():
-    # See https://blog.quora.com/Launched-Customizable-Links for Quora's launch post
+    # See https://blog.quora.com/Launched-Customizable-Links for Quora's
+    # launch post
     parser = argparse.ArgumentParser(description=("Get the linked title of " +
         "URLs (similar to Quora and Facebook)"))
     parser.add_argument("url", type=str, help="the URL")
