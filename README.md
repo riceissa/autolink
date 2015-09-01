@@ -20,6 +20,18 @@ optional arguments:
   -v, --verbose         enable debug messages
 ```
 
+## Examples
+
+Note that there is actually no new line at the end of outputs even though these
+are inserted here to make the output nicer.
+
+```
+$ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation"
+[Digital preservation \- Cause Prioritization Wiki](http://causeprioritization.org/Digital%20preservation)
+$ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation" --clean
+[Digital preservation](http://causeprioritization.org/Digital%20preservation)[issa:autolink]>
+```
+
 ## Contributing
 
 All contributions are to use the same license as in the LICENSE file.
