@@ -139,11 +139,36 @@ def get_filetype_link(link_text, url, filetype):
                 result += c
         return "[{link_text}]({url})".format(link_text=result, url=url)
     if filetype == "html":
-        return '<a href="{url}">{link_text}</a>'.format(url=url, link_text=html.escape(link_text))
+        return '<a href="{url}">{link_text}</a>'.format(url=url,
+                link_text=html.escape(link_text))
     if filetype == "mediawiki":
-        return "[{url} {link_text}]".format(url=url, link_text=link_text)
+        return "[{url} {link_text}]".format(url=url,
+                link_text=link_text)
     if filetype == "latex":
-        return ("\\href{%s}{%s}" % (url, link_text))
+        # LaTeX is really sensitive about special characters so this
+        # probably needs a lot of tweaking
+        special_chars = "$&%{_#"
+        result = ""
+        for c in link_text:
+            if c in special_chars:
+                result += "\\" + c
+            elif c == "\\":
+                result += "\\textbackslash{}"
+            elif c == "~":
+                result += "\\textasciitilde{}"
+            else:
+                result += c
+        clean_url = ""
+        for c in url:
+            if c in special_chars or c in "~":
+                clean_url += "\\" + c
+            elif c == "\\"
+                result += "{\\textbackslash}"
+            else:
+                result += c
+        return ("\\href{%s}{%s}" % (url, result))
+    else:
+        return "{link_text}: {url}".format(url=url, link_text=link_text)
 
 def get_link_text(url, mime_type, data=None):
     '''
