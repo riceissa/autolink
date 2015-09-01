@@ -176,6 +176,7 @@ def get_link_text(url, mime_type, data=None):
             og_title_lst = []
             twitter_title_lst = []
             meta_title_lst = []
+            schema_lst = []
             for i in meta:
                 if i.get("property") == "og:title":
                     og_title_lst.append(i.get("content"))
@@ -183,6 +184,8 @@ def get_link_text(url, mime_type, data=None):
                     twitter_title_lst.append(i.get("content"))
                 elif i.get("name") == "title":
                     meta_title_lst.append(i.get("content"))
+                elif i.get("itemprop") == "name":
+                    schema_lst.append(i.get("content"))
             if og_title_lst:
                 logging.debug("found og:title")
                 result = og_title_lst[0].strip()
@@ -192,6 +195,9 @@ def get_link_text(url, mime_type, data=None):
             elif meta_title_lst:
                 logging.debug("found meta name title")
                 result = meta_title_lst[0].strip()
+            elif schema_lst:
+                logging.debug("found schema title")
+                result = schema_lst[0].strip()
             elif soup.title and soup.title.string:
                 logging.debug("found title tag")
                 result = messy_title_parse(html.unescape(
