@@ -68,9 +68,11 @@ def try_url(url, fmt, clean=False):
                 # <title> is probably in the first around 10MB of HTML
                 # files, so we can download less here than in the case
                 # for PDFs
+                logging.debug("HTML detected")
                 doc = response.iter_content(chunk_size=1000)
             else:
                 # PDFs might require more downloading
+                logging.debug("PDF detected")
                 doc = response.iter_content(chunk_size=1000000)
             data = next(doc)
             result["text"] = get_filetype_link(
