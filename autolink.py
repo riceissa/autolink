@@ -20,7 +20,7 @@ def main():
         "URLs (similar to Quora and Facebook)"))
     parser.add_argument("url", type=str, help="the URL")
     parser.add_argument("-f", "--format", type=str,
-            help=("output format; accepted values are 'html', " +
+            help=("output format; accepted values are 'none', 'html', " +
             "'markdown', 'latex', 'mediawiki'"))
     parser.add_argument("-c", "--clean", action="store_true",
             help=("clean the title to remove the site name " +
@@ -128,7 +128,7 @@ def get_filetype_link(link_text, url, filetype):
             at this point.
         url: A string of the URL.
         filetype: A string of the output filetype. Accepted parameters are:
-            "html", "markdown", "latex".
+            "none", "html", "markdown", "latex".
 
     Returns:
         A string that is a valid hyperlink for the specified output filetype.
