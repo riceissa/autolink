@@ -61,7 +61,8 @@ def try_url(url, fmt, clean=False):
         headers = {"User-Agent": user_agent}
         response = requests.get(url, stream=True, headers=headers)
         url = response.url
-        if  "text/html" in response.headers["content-type"] or "application/pdf" in response.headers["content-type"]:
+        if  ("text/html" in response.headers["content-type"] or
+                "application/pdf" in response.headers["content-type"]):
             logging.debug("HTML page or PDF file detected")
             # <title> is probably in the first around 10MB
             doc = response.iter_content(chunk_size=1000000)
