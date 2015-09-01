@@ -1,7 +1,7 @@
 # autolink
 automatically detect the title of a link
 
-```bash
+```
 $ ./autolink.py --help
 usage: autolink.py [-h] [-f FORMAT] [-c] [-v] url
 
