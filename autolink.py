@@ -19,6 +19,12 @@ def main():
     parser = argparse.ArgumentParser(description=("Get the linked title of " +
         "URLs (similar to Quora and Facebook)"))
     parser.add_argument("url", type=str, help="the URL")
+    parser.add_argument("-f", "--format", type=str,
+            help=("output format; accepted values are 'html', " +
+            "'markdown', 'latex', 'mediawiki'"))
+    parser.add_argument("-c", "--clean", action="store_true",
+            help=("clean the title to remove the site name " +
+            "if the title was obtained from an HTML title tag"))
     parser.add_argument("-v", "--verbose", action="store_const",
         dest="log_level", const=logging.DEBUG, help="enable debug messages")
     args = parser.parse_args()
@@ -34,8 +40,11 @@ def main():
         logging.debug("First attempt failed; trying second attempt")
         attempt_2 = try_url("http://" + url)
         if attempt_2["exit"]:
+            logging.debug("Second attempt succeeded!")
             print(attempt_2["text"], end="")
         else:
+            logging.debug("Second attempted failed; using result " +
+                "from first attempt")
             print(attempt_1["text"], end="")
 
 def try_url(url):
@@ -162,16 +171,36 @@ def get_link_text(url, mime_type, data=None):
         try:
             soup = BeautifulSoup(data, 'html.parser')
             meta = soup.find_all("meta")
-            possible = [i.get("content") for i in meta if i.get("property") == "og:title"]
-            if possible:
-                result = possible[0].strip()
-            elif soup.title.string:
-                result = messy_title_parse(html.unescape(soup.title.string))
+            og_title_lst = []
+            twitter_title_lst = []
+            meta_title_lst = []
+            for i in meta:
+                if i.get("property") == "og:title":
+                    og_title_lst.append(i.get("content"))
+                elif i.get("property") == "twitter:title":
+                    twitter_title_lst.append(i.get("content"))
+                elif i.get("name") == "title":
+                    meta_title_lst.append(i.get("content"))
+            if og_title_lst:
+                logging.debug("found og:title")
+                result = og_title_lst[0].strip()
+            elif twitter_title_lst:
+                logging.debug("found twitter title")
+                result = twitter_title_lst[0].strip()
+            elif meta_title_lst:
+                logging.debug("found meta name title")
+                result = meta_title_lst[0].strip()
+            elif soup.title and soup.title.string:
+                logging.debug("found title tag")
+                result = messy_title_parse(html.unescape(
+                    soup.title.string))
             else:
+                logging.debug("no title found; using default")
                 result = "Page on " + tld
         except AttributeError:
             # Probably just empty title when trying to get
             # soup.title.string
+            logging.debug("FIXME: this isn't supposed to happen")
             result = "Page on " + tld
     if len(result) > 255:
         result = result[:253] + " …"
