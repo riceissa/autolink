@@ -32,13 +32,13 @@ def main():
 
     url = args.url
     logging.debug("Trying first attempt")
-    attempt_1 = try_url(url)
+    attempt_1 = try_url(url, args.format)
     if attempt_1["exit"]:
         logging.debug("First attempt succeeded!")
         print(attempt_1["text"], end="")
     else:
         logging.debug("First attempt failed; trying second attempt")
-        attempt_2 = try_url("http://" + url)
+        attempt_2 = try_url("http://" + url, args.format)
         if attempt_2["exit"]:
             logging.debug("Second attempt succeeded!")
             print(attempt_2["text"], end="")
@@ -47,7 +47,7 @@ def main():
                 "from first attempt")
             print(attempt_1["text"], end="")
 
-def try_url(url):
+def try_url(url, fmt):
     '''
     Return (Str, True) if succeeded; (Str, False) otherwise.
     '''
@@ -69,14 +69,14 @@ def try_url(url):
             result["text"] = get_filetype_link(
                 get_link_text(url, response.headers["content-type"], data=data),
                 url,
-                "markdown"
+                fmt
             )
         else:
             logging.debug("No HTML page detected")
             result["text"] = get_filetype_link(
                 get_link_text(url, response.headers["content-type"]),
                 url,
-                "markdown"
+                fmt
             )
         result["exit"] = True
     except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidSchema, urllib3.exceptions.LocationParseError):
@@ -142,6 +142,8 @@ def get_filetype_link(link_text, url, filetype):
         return '<a href="{url}">{link_text}</a>'.format(url=url, link_text=html.escape(link_text))
     if filetype == "mediawiki":
         return "[{url} {link_text}]".format(url=url, link_text=link_text)
+    if filetype == "latex":
+        return ("\\href{%s}{%s}" % (url, link_text))
 
 def get_link_text(url, mime_type, data=None):
     '''
