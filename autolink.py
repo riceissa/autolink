@@ -64,12 +64,14 @@ def try_url(url, fmt, clean=False):
         if  ("text/html" in response.headers["content-type"] or
                 "application/pdf" in response.headers["content-type"]):
             logging.debug("HTML page or PDF file detected")
-            # <title> is probably in the first around 10MB(FIXME:
-            # 1000000 isn't 10MB)
-            # FIXME: for html files, we can download less. the current
-            # value is only intended for PDFs since those may require
-            # more
-            doc = response.iter_content(chunk_size=1000000)
+            if "text/html" in response.headers["content-type"]:
+                # <title> is probably in the first around 10MB of HTML
+                # files, so we can download less here than in the case
+                # for PDFs
+                doc = response.iter_content(chunk_size=1000)
+            else:
+                # PDFs might require more downloading
+                doc = response.iter_content(chunk_size=1000000)
             data = next(doc)
             result["text"] = get_filetype_link(
                 get_link_text(url, response.headers["content-type"], data=data,
