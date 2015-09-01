@@ -30,6 +30,8 @@ $ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservati
 [Digital preservation \- Cause Prioritization Wiki](http://causeprioritization.org/Digital%20preservation)
 $ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation" --clean
 [Digital preservation](http://causeprioritization.org/Digital%20preservation)
+$ ./autolink.py -f markdown "http://lesswrong.com/lw/2as/diseased_thinking_dissolving_questions_about/" --clean
+[Diseased thinking: dissolving questions about disease](http://lesswrong.com/lw/2as/diseased_thinking_dissolving_questions_about/)
 ```
 
 ## Contributing
