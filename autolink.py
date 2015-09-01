@@ -32,13 +32,13 @@ def main():
 
     url = args.url
     logging.debug("Trying first attempt")
-    attempt_1 = try_url(url, args.format)
+    attempt_1 = try_url(url, args.format, clean=args.clean)
     if attempt_1["exit"]:
         logging.debug("First attempt succeeded!")
         print(attempt_1["text"], end="")
     else:
         logging.debug("First attempt failed; trying second attempt")
-        attempt_2 = try_url("http://" + url, args.format)
+        attempt_2 = try_url("http://" + url, args.format, clean=args.clean)
         if attempt_2["exit"]:
             logging.debug("Second attempt succeeded!")
             print(attempt_2["text"], end="")
@@ -47,7 +47,7 @@ def main():
                 "from first attempt")
             print(attempt_1["text"], end="")
 
-def try_url(url, fmt):
+def try_url(url, fmt, clean=False):
     '''
     Return (Str, True) if succeeded; (Str, False) otherwise.
     '''
@@ -67,7 +67,8 @@ def try_url(url, fmt):
             doc = response.iter_content(chunk_size=1000000)
             data = next(doc)
             result["text"] = get_filetype_link(
-                get_link_text(url, response.headers["content-type"], data=data),
+                get_link_text(url, response.headers["content-type"], data=data,
+                    clean=clean),
                 url,
                 fmt
             )
@@ -170,7 +171,7 @@ def get_filetype_link(link_text, url, filetype):
     else:
         return "{link_text}: {url}".format(url=url, link_text=link_text)
 
-def get_link_text(url, mime_type, data=None):
+def get_link_text(url, mime_type, data=None, clean=False):
     '''
     Take URL, MIME type, and optional data to produce the link text.
     '''
@@ -225,8 +226,9 @@ def get_link_text(url, mime_type, data=None):
                 result = schema_lst[0].strip()
             elif soup.title and soup.title.string:
                 logging.debug("found title tag")
-                result = messy_title_parse(html.unescape(
-                    soup.title.string))
+                result = html.unescape(soup.title.string)
+                if clean:
+                    result = messy_title_parse(result)
             else:
                 logging.debug("no title found; using default")
                 result = "Page on " + tld
