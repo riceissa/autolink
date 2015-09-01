@@ -24,6 +24,7 @@ optional arguments:
 
 Note that there is actually no new line at the end of outputs even though these
 are inserted here to make the output nicer.
+Below `$` indicates the shell prompt.
 
 ```
 $ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation"
