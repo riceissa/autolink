@@ -162,11 +162,11 @@ def get_filetype_link(link_text, url, filetype):
         for c in url:
             if c in special_chars or c in "~":
                 clean_url += "\\" + c
-            elif c == "\\"
-                result += "{\\textbackslash}"
+            elif c == "\\":
+                clean_url += "{\\textbackslash}"
             else:
-                result += c
-        return ("\\href{%s}{%s}" % (url, result))
+                clean_url += c
+        return ("\\href{%s}{%s}" % (clean_url, result))
     else:
         return "{link_text}: {url}".format(url=url, link_text=link_text)
 
