@@ -85,7 +85,8 @@ def try_url(url, fmt, clean=False):
             requests.exceptions.ConnectionError,
             requests.exceptions.InvalidSchema,
             urllib3.exceptions.LocationParseError):
-        result["text"] = "[{url}]({url})".format(url=url)
+        # since it's not a valid URL, just return it
+        result["text"] = url
         result["exit"] = False
     return result
 
@@ -106,10 +107,12 @@ def analyze_url(url):
     """
     try:
         tl = get_tld(url)
-    except tld.exceptions.TldBadUrl:
+    except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound):
+        logging.debug("bad TLD; trying with http:// prefix")
         try:
             tl = get_tld("http://" + url)
-        except tld.exceptions.TldBadUrl:
+        except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound):
+            logging.debug("still bad TLD; giving up")
             return ""
     if tl == "facebook.com" and "facebook.com/groups/" in url:
             return "Facebook group page post"
