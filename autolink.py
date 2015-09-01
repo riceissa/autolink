@@ -239,6 +239,8 @@ def get_link_text(url, mime_type, data=None, clean=False):
             elif meta_title_lst:
                 logging.debug("found meta name title")
                 result = meta_title_lst[0].strip()
+                if clean:
+                    result = messy_title_parse(result)
             elif schema_lst:
                 logging.debug("found schema title")
                 result = schema_lst[0].strip()
