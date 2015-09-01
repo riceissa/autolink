@@ -4,6 +4,7 @@
 import argparse
 import io
 import logging
+import warnings
 import sys
 import requests
 import urllib3
@@ -11,6 +12,7 @@ import tld
 from tld import get_tld
 from bs4 import BeautifulSoup
 import html
+import PyPDF2
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
 def main():
@@ -201,15 +203,16 @@ def get_link_text(url, mime_type, data=None, clean=False):
         # fix this later, but I always get a "PdfReadWarning: Xref table
         # not zero-indexed" which should only happen when the -v flag is
         # present
-        import warnings
         warnings.filterwarnings("ignore")
-        pdf = PdfFileReader(data, strict=True)
-        # PyPDF2 somehow thinks many PDFs are encrypted with the empty
-        # string, so deal with that
-        if pdf.isEncrypted:
-            pdf.decrypt('')
-        result = pdf.getDocumentInfo().title
-        #result = "PDF on " + tld
+        try:
+            pdf = PdfFileReader(data, strict=True)
+            # PyPDF2 somehow thinks many PDFs are encrypted with the empty
+            # string, so deal with that
+            if pdf.isEncrypted:
+                pdf.decrypt('')
+            result = pdf.getDocumentInfo().title
+        except PyPDF2.utils.PdfReadError:
+            result = "PDF on " + tld
     elif "text/html" in mime_type:
         try:
             soup = BeautifulSoup(data, 'html.parser')
