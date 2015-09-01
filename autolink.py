@@ -80,7 +80,10 @@ def try_url(url, fmt, clean=False):
                 fmt
             )
         result["exit"] = True
-    except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidSchema, urllib3.exceptions.LocationParseError):
+    except (requests.exceptions.MissingSchema,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.InvalidSchema,
+            urllib3.exceptions.LocationParseError):
         result["text"] = "[{url}]({url})".format(url=url)
         result["exit"] = False
     return result
