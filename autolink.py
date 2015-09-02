@@ -71,7 +71,7 @@ def try_url(url, fmt, clean=False):
                 # files, so we can download less here than in the case
                 # for PDFs
                 logging.debug("HTML detected")
-                doc = response.iter_content(chunk_size=1000)
+                doc = response.iter_content(chunk_size=10000)
             else:
                 # PDFs might require more downloading
                 logging.debug("PDF detected")
@@ -148,7 +148,10 @@ def get_filetype_link(link_text, url, filetype):
     """
     if filetype == "markdown":
         # From http://pandoc.org/README.html#backslash-escapes
-        special_chars = "\\`*_{}[]()>#+-.!"
+        # There is also the hyphen, "-", but I've removed that since
+        # escaping it just prevents em- and en-dashes from forming (and
+        # in most cases, this is what one wants)
+        special_chars = "\\`*_{}[]()>#+.!"
         result = ""
         for c in link_text:
             if c in special_chars:
