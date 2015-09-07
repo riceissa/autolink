@@ -243,7 +243,7 @@ def get_link_text(url, mime_type, data=None, clean=False):
                 logging.debug("found meta name title")
                 result = meta_title_lst[0].strip()
                 if clean:
-                    result = messy_title_parse(result)
+                    result = messy_title_parse(result, url)
             elif schema_lst:
                 logging.debug("found schema title")
                 result = schema_lst[0].strip()
@@ -251,7 +251,7 @@ def get_link_text(url, mime_type, data=None, clean=False):
                 logging.debug("found title tag")
                 result = html.unescape(soup.title.string)
                 if clean:
-                    result = messy_title_parse(result)
+                    result = messy_title_parse(result, url)
             else:
                 logging.debug("no title found; using default")
                 result = "Page on " + tld
@@ -274,6 +274,8 @@ def messy_title_parse(title, url=None):
     bar_split = result.split(" | ")
     em_dash_split = result.split(" — ")
     colon_split = result.split(": ")
+    if get_tld(url) in ["autoadmit.com", "xoxohth.com"]:
+        return " - ".join(hyphen_split[1:])
     if len(hyphen_split) > 1:
         # So there is actually more than one part, so we just take the
         # first and we're done.  This is for titles like "Post Title -
