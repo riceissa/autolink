@@ -214,6 +214,8 @@ def get_link_text(url, mime_type, data=None, clean=False):
             if pdf.isEncrypted:
                 pdf.decrypt('')
             result = pdf.getDocumentInfo().title
+            if not result or result.strip() == "":
+                result = "PDF on " + tld
         except PyPDF2.utils.PdfReadError:
             result = "PDF on " + tld
     elif "text/html" in mime_type:
