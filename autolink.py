@@ -94,6 +94,7 @@ def try_url(url, fmt, clean=False):
     except (requests.exceptions.MissingSchema,
             requests.exceptions.ConnectionError,
             requests.exceptions.InvalidSchema,
+            requests.exceptions.InvalidURL,
             urllib3.exceptions.LocationParseError):
         # since it's not a valid URL, just return it
         result["text"] = url
