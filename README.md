@@ -22,16 +22,14 @@ optional arguments:
 
 ## Examples
 
-Note that there is actually no new line at the end of outputs even though these
-are inserted here to make the output nicer.
 Below `$` indicates the shell prompt.
 
 ```
-$ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation"
-[Digital preservation \- Cause Prioritization Wiki](http://causeprioritization.org/Digital%20preservation)
-$ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation" --clean
+$ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation" | sed 's/.*/&\n/'
+[Digital preservation - Cause Prioritization Wiki](http://causeprioritization.org/Digital%20preservation)
+$ ./autolink.py -f markdown "http://causeprioritization.org/Digital%20preservation" --clean | sed 's/.*/&\n/'
 [Digital preservation](http://causeprioritization.org/Digital%20preservation)
-$ ./autolink.py -f markdown "http://lesswrong.com/lw/2as/diseased_thinking_dissolving_questions_about/" --clean
+$ ./autolink.py -f markdown "http://lesswrong.com/lw/2as/diseased_thinking_dissolving_questions_about/" --clean | sed 's/.*/&\n/'
 [Diseased thinking: dissolving questions about disease](http://lesswrong.com/lw/2as/diseased_thinking_dissolving_questions_about/)
 ```
 
