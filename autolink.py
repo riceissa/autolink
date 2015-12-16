@@ -23,7 +23,7 @@ def main():
     parser.add_argument("url", type=str, help="the URL")
     parser.add_argument("-f", "--format", type=str,
             help=("output format; accepted values are 'none', 'html', " +
-            "'markdown', 'latex', 'mediawiki'"))
+            "'markdown', 'tex', 'latex', 'mediawiki'"))
     parser.add_argument("-c", "--clean", action="store_true",
             help=("clean the title to remove the site name " +
             "if the title was obtained from an HTML title tag"))
@@ -142,7 +142,7 @@ def get_filetype_link(link_text, url, filetype):
             at this point.
         url: A string of the URL.
         filetype: A string of the output filetype. Accepted parameters are:
-            "none", "html", "markdown", "latex".
+            "none", "html", "markdown", "tex", "latex".
 
     Returns:
         A string that is a valid hyperlink for the specified output filetype.
@@ -166,7 +166,7 @@ def get_filetype_link(link_text, url, filetype):
     if filetype == "mediawiki":
         return "[{url} {link_text}]".format(url=url,
                 link_text=link_text)
-    if filetype == "latex":
+    if filetype in ["latex", "tex"]:
         # LaTeX is really sensitive about special characters so this
         # probably needs a lot of tweaking
         special_chars = "$&%{_#"
