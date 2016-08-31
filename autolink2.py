@@ -133,5 +133,36 @@ def plaintext_hyperlink(dictionary):
     else:
         return dictionary["url"]
 
+publisher_map = {
+        "huffingtonpost.com": "The Huffington Post",
+        "lesswrong.com": "LessWrong",
+        "nytimes.com": "The New York Times",
+        "huffingtonpost.ca": "Huffington Post Canada",
+        "washingtonpost.com": "The Washington Post",
+        "indiatimes.com": "The Times of India",
+        "bostonglobe.com": "The Boston Globe",
+        "mirror.co.uk": "Mirror",
+        "telegraph.co.uk": "The Telegraph",
+        "bloomberg.com": "Businessweek",
+        "ft.com": "Financial Times",
+        "economist.com": "The Economist",
+        "arstechnica.com": "Ars Technica",
+        "wsj.com": "The Wall Street Journal",
+        "theguardian.com": "The Guardian",
+        "independent.co.uk": "The Independent",
+        "theregister.co.uk": "The Register",
+        "nybooks.com": "The New York Review of Books",
+        "who.int": "World Health Organization",
+        "givewell.org": "GiveWell",
+        "econlog.econlib.org": "EconLog",
+        "press.princeton.edu": "Princeton University Press",
+        "princeton.edu": "Princeton University",
+        "usatoday.com": "USA Today",
+        "latimes.com": "Los Angeles Times",
+        "plos.org": "PLOS",
+        "theatlantic.com": "The Atlantic",
+        "usnews.com": "U.S. News & World Report",
+}
+
 if __name__ == "__main__":
     main()
