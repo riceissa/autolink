@@ -17,7 +17,6 @@ def main():
     args = parser.parse_args()
     if args.verbose:
         print("ARGS", args, file=sys.stderr)
-
     soup = BeautifulSoup(sys.stdin, "html.parser")
     dictionary = soup2dict(soup, url=args.url, verbose=args.verbose)
     if args.verbose:
@@ -29,6 +28,8 @@ def main():
             out = markdown_hyperlink(dictionary)
     elif args.filetype == "mediawiki":
         out = mediawiki_citation(dictionary)
+    elif args.filetype == "html":
+        out = html_hyperlink(dictionary)
     else:
         out = plaintext_hyperlink(dictionary)
     print(out, end="")
@@ -111,11 +112,12 @@ def markdown_title(dictionary):
     # dashes).
     special_chars = "\\`*_{}[]()>#+.!"
     result = ""
-    for c in dictionary["title"]:
-        if c in special_chars:
-            result += "\\" + c
-        else:
-            result += c
+    if "title" in dictionary:
+        for c in dictionary["title"]:
+            if c in special_chars:
+                result += "\\" + c
+            else:
+                result += c
     return result
 
 def mediawiki_citation(dictionary):
@@ -123,6 +125,16 @@ def mediawiki_citation(dictionary):
 
 def mediawiki_hyperlink(dictionary):
     pass
+
+def html_citation(dictionary):
+    pass
+
+def html_hyperlink(dictionary):
+    if "title" in dictionary:
+        link_text = dictionary["title"]
+    else:
+        link_text = dictionary["url"]
+    return '<a href="{}">{}</a>'.format(dictionary["url"], link_text)
 
 def plaintext_citation(dictionary):
     pass
