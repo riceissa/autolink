@@ -10,13 +10,19 @@ def main():
     parser.add_argument("url", type=str, help="the URL")
     parser.add_argument("-f", "--filetype", type=str,
             help="output filetype")
+    parser.add_argument("-C", "--citation", action="store_true",
+            help="produce citation-style link instead of a hyperlink")
     args = parser.parse_args()
+    print("ARGS", args, file=sys.stderr)
 
     soup = BeautifulSoup(sys.stdin, "html.parser")
     dictionary = soup2dict(soup, args.url)
-    print(dictionary)
+    print("DICTIONARY", dictionary, file=sys.stderr)
     if args.filetype == "markdown":
-        out = markdown_hyperlink(dictionary)
+        if args.citation:
+            out = markdown_citation(dictionary)
+        else:
+            out = markdown_hyperlink(dictionary)
     elif args.filetype == "mediawiki":
         out = mediawiki_citation(dictionary)
     else:
@@ -33,7 +39,7 @@ def soup2dict(soup, url=""):
     if url:
         result["url"] = url
     meta = soup.find_all("meta")
-    print(meta)
+    print(meta, file=sys.stderr)
     for tag in meta:
         if tag.get("property") == "og:title" and tag.get("content"):
             result["title"] = tag.get("content")
@@ -67,23 +73,45 @@ def soup2dict(soup, url=""):
     return result
 
 def markdown_citation(dictionary, reference_style=False):
-    pass
+    cite_info = ""
+    if "author" in dictionary:
+        cite_info += dictionary["author"] + ". "
+    if "title" in dictionary:
+        cite_info += "“" + dictionary["title"] + "”" + ". "
+    if "publisher" in dictionary:
+        cite_info +=  dictionary["publisher"] + ". "
+    if "date" in dictionary:
+        date = get_date(dictionary, url)
+        cite_info += date + ". "
+    if cite_info:
+        cite_info = ' "' + cite_info.strip() + '"'
+    if reference_style:
+        base = '["{link_text}"][]\n\n[]: {url}{cite_info}'
+    else:
+        base = '["{link_text}"]({url}{cite_info})'
+    link_text = markdown_title(dictionary)
+    url = dictionary["url"]
+    return base.format(link_text=link_text, url=url, cite_info=cite_info)
 
 def markdown_hyperlink(dictionary, reference_style=False):
-    # From http://pandoc.org/README.html#backslash-escapes
-    # There is also the hyphen, "-", but I've removed that since
-    # escaping it just prevents em- and en-dashes from forming (and
-    # in most cases, this is what one wants)
+    url = dictionary["url"]
+    link_text = markdown_title(dictionary)
+    return "[{link_text}]({url})".format(link_text=link_text, url=url)
+
+def markdown_title(dictionary):
+    # Special characters to backslash-escape from
+    # http://pandoc.org/README.html#backslash-escapes . There is also the
+    # hyphen, "-", but I've removed that since escaping it just prevents em-
+    # and en-dashes from forming (and in most cases, one wants these fancy
+    # dashes).
     special_chars = "\\`*_{}[]()>#+.!"
     result = ""
-    url = dictionary["url"]
-    link_text = dictionary["title"]
-    for c in link_text:
+    for c in dictionary["title"]:
         if c in special_chars:
             result += "\\" + c
         else:
             result += c
-    return "[{link_text}]({url})".format(link_text=result, url=url)
+    return result
 
 def mediawiki_citation(dictionary):
     pass
