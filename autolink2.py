@@ -1,4 +1,7 @@
 
+def main():
+    pass
+
 def soup2dict(soup, url=""):
     """
     Extract info from a BeautifulSoup soup into a dictionary.  Return a new
