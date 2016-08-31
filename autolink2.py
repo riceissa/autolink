@@ -34,6 +34,14 @@ def main():
         out = plaintext_hyperlink(dictionary)
     print(out, end="")
 
+def sanitize_str(s):
+    if isinstance(s, str):
+        # Remove nonprinting characters and newlines
+        return s.translate(dict.fromkeys(range(32)))
+    else:
+        print("yikes")
+        return ""
+
 def soup2dict(soup, url="", verbose=False):
     """
     Extract info from a BeautifulSoup soup into a dictionary.  Return a new
@@ -48,34 +56,33 @@ def soup2dict(soup, url="", verbose=False):
         print(meta, file=sys.stderr)
     for tag in meta:
         if tag.get("property") == "og:title" and tag.get("content"):
-            result["title"] = tag.get("content")
+            result["title"] = sanitize_str(tag.get("content"))
         elif tag.get("name") == "title":
-            result["title"] = tag.get("content")
+            result["title"] = sanitize_str(tag.get("content"))
         elif tag.get("name") == "author":
-            result["author"] = tag.get("content")
+            result["author"] = sanitize_str(tag.get("content"))
         elif tag.get("name") == "article:author_name" and ("author" not in
                 result):
-            result["author"] = tag.get("content")
+            result["author"] = sanitize_str(tag.get("content"))
         elif tag.get("name") == "DCSext.author":
-            result["author"] = tag.get("content")
+            result["author"] = sanitize_str(tag.get("content"))
         elif tag.get("name") == "dat":
-            result["date"] = tag.get("content")
+            result["date"] = sanitize_str(tag.get("content"))
         if tag.get("property") == "og:site_name":
-            result["publisher"] = tag.get("content")
+            result["publisher"] = sanitize_str(tag.get("content"))
         elif tag.get("name") == "cre":
-            result["publisher"] = tag.get("content")
+            result["publisher"] = sanitize_str(tag.get("content"))
         elif tag.get("name") == "dcterms.date":
-            result["date"] = tag.get("content")
+            result["date"] = sanitize_str(tag.get("content"))
         elif tag.get("property") == "article:published_time":
-            result["date"] = tag.get("content")
+            result["date"] = sanitize_str(tag.get("content"))
         elif tag.get("property") == "article:modified_time" and ("date" not in
                 result):
-            result["date"] = tag.get("content")
+            result["date"] = (tag.get("content"))
     if "title" not in result and soup.title is not None:
-        result["title"] = soup.title.string
+        result["title"] = sanitize_str(soup.title.string)
     if "title" in result:
-        # Remove nonprinting characters and newlines
-        result["title"] = result["title"].translate(dict.fromkeys(range(32)))
+        result["title"] = sanitize_str(result["title"])
     return result
 
 def markdown_citation(dictionary, reference_style=False):
@@ -87,7 +94,7 @@ def markdown_citation(dictionary, reference_style=False):
     if "publisher" in dictionary:
         cite_info +=  dictionary["publisher"] + ". "
     if "date" in dictionary:
-        date = get_date(dictionary, url)
+        date = get_date(dictionary)
         cite_info += date + ". "
     if cite_info:
         cite_info = ' "' + cite_info.strip() + '"'
@@ -144,6 +151,10 @@ def plaintext_hyperlink(dictionary):
         return "{}: {}".format(dictionary["title"], dictionary["url"])
     else:
         return dictionary["url"]
+
+def get_date(dictionary):
+    if "date" in dictionary:
+        return dictionary["date"]
 
 publisher_map = {
         "arstechnica.com": "Ars Technica",
