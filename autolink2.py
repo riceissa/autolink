@@ -12,12 +12,16 @@ def main():
             help="output filetype")
     parser.add_argument("-C", "--citation", action="store_true",
             help="produce citation-style link instead of a hyperlink")
+    parser.add_argument("-v", "--verbose", action="store_true",
+            help="enable debug messages")
     args = parser.parse_args()
-    print("ARGS", args, file=sys.stderr)
+    if args.verbose:
+        print("ARGS", args, file=sys.stderr)
 
     soup = BeautifulSoup(sys.stdin, "html.parser")
-    dictionary = soup2dict(soup, args.url)
-    print("DICTIONARY", dictionary, file=sys.stderr)
+    dictionary = soup2dict(soup, url=args.url, verbose=args.verbose)
+    if args.verbose:
+        print("DICTIONARY", dictionary, file=sys.stderr)
     if args.filetype == "markdown":
         if args.citation:
             out = markdown_citation(dictionary)
@@ -29,7 +33,7 @@ def main():
         out = plaintext_hyperlink(dictionary)
     print(out, end="")
 
-def soup2dict(soup, url=""):
+def soup2dict(soup, url="", verbose=False):
     """
     Extract info from a BeautifulSoup soup into a dictionary.  Return a new
     dictionary containing metadata fields. They keys that can be in the
@@ -39,7 +43,8 @@ def soup2dict(soup, url=""):
     if url:
         result["url"] = url
     meta = soup.find_all("meta")
-    print(meta, file=sys.stderr)
+    if verbose:
+        print(meta, file=sys.stderr)
     for tag in meta:
         if tag.get("property") == "og:title" and tag.get("content"):
             result["title"] = tag.get("content")
