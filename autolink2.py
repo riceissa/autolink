@@ -131,7 +131,12 @@ def mediawiki_citation(dictionary):
     pass
 
 def mediawiki_hyperlink(dictionary):
-    pass
+    url = dictionary["url"]
+    if "title" in dictionary:
+        link_text = dictionary["title"]
+        return "[{url} {link_text}]".format(url=url, link_text=link_text)
+    else:
+        return url
 
 def html_citation(dictionary):
     pass
