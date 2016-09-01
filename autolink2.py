@@ -27,7 +27,10 @@ def main():
         else:
             out = markdown_hyperlink(dictionary)
     elif args.filetype == "mediawiki":
-        out = mediawiki_citation(dictionary)
+        if args.citation:
+            out = mediawiki_citation(dictionary)
+        else:
+            out = mediawiki_hyperlink(dictionary)
     elif args.filetype == "html":
         out = html_hyperlink(dictionary)
     else:
@@ -128,7 +131,28 @@ def markdown_title(dictionary):
     return result
 
 def mediawiki_citation(dictionary):
-    pass
+    url = dictionary["url"]
+    result = "<ref>{{cite web "
+    result += "|url=" + url + " "
+    title = ""
+    if ("publisher" in dictionary and "title" in dictionary and
+            dictionary["title"].endswith(" - " + dictionary["publisher"])):
+        title = title[:-len(" - " + publisher)]
+    if "author" in dictionary:
+        result += "|author=" + dictionary["author"] + " "
+    if "date" in dictionary:
+        result += "|date=" + dictionary["date"] + " "
+    if "title" in dictionary:
+        if title:
+            result += "|title=" + title + " "
+        else:
+            result += "|title=" + dictionary["title"] + " "
+    if dictionary["publisher"]:
+        result += "|publisher=" + dictionary["publisher"] + " "
+    result += "|accessdate=" + datetime.date.today().strftime("%B %-d, %Y")
+    result = result.strip()
+    result += "}}</ref>"
+    return result
 
 def mediawiki_hyperlink(dictionary):
     url = dictionary["url"]
