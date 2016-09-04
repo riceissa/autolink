@@ -12,6 +12,8 @@ def main():
             help="output filetype")
     parser.add_argument("-C", "--citation", action="store_true",
             help="produce citation-style link instead of a hyperlink")
+    parser.add_argument("-R", "--reference", action="store_true",
+            help="produce a reference-style link for filetypes that support it")
     parser.add_argument("-v", "--verbose", action="store_true",
             help="enable debug messages")
     args = parser.parse_args()
@@ -23,9 +25,9 @@ def main():
         print("DICTIONARY", dictionary, file=sys.stderr)
     if args.filetype == "markdown":
         if args.citation:
-            out = markdown_citation(dictionary)
+            out = markdown_citation(dictionary, args.reference)
         else:
-            out = markdown_hyperlink(dictionary)
+            out = markdown_hyperlink(dictionary, args.reference)
     elif args.filetype == "mediawiki":
         if args.citation:
             out = mediawiki_citation(dictionary)
@@ -112,7 +114,11 @@ def markdown_citation(dictionary, reference_style=False):
 def markdown_hyperlink(dictionary, reference_style=False):
     url = dictionary["url"]
     link_text = markdown_title(dictionary)
-    return "[{link_text}]({url})".format(link_text=link_text, url=url)
+    if reference_style:
+        base = '[{link_text}][]\n\n[]: {url}'
+    else:
+        base = "[{link_text}]({url})"
+    return base.format(link_text=link_text, url=url)
 
 def markdown_title(dictionary):
     # Special characters to backslash-escape from
