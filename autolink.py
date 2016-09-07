@@ -186,20 +186,21 @@ def mediawiki_citation(dictionary):
     result = "<ref>{{cite web "
     result += "|url=" + url + " "
     title = ""
-    if ("publisher" in dictionary and "title" in dictionary and
-            dictionary["title"].endswith(" - " + dictionary["publisher"])):
+    publisher = ""
+    if "publisher" in dictionary:
+        publisher = dictionary['publisher']
+    if "title" in dictionary:
+        title = dictionary['title']
+    if title and publisher and title.endswith(" - " + publisher):
         title = title[:-len(" - " + publisher)]
     if "author" in dictionary:
         result += "|author=" + dictionary["author"] + " "
     if "date" in dictionary:
         result += "|date=" + dictionary["date"] + " "
-    if "title" in dictionary:
-        if title:
-            result += "|title=" + title + " "
-        else:
-            result += "|title=" + dictionary["title"] + " "
-    if "publisher" in dictionary:
-        result += "|publisher=[[" + dictionary["publisher"] + "]] "
+    if title:
+        result += "|title=" + title + " "
+    if publisher:
+        result += "|publisher=[[" + publisher + "]] "
     result += "|accessdate=" + datetime.date.today().strftime("%B %-d, %Y")
     result = result.strip()
     result += "}}</ref>"
