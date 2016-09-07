@@ -4,6 +4,7 @@ import argparse
 import sys
 import datetime
 from bs4 import BeautifulSoup
+import tld
 
 def main():
     parser = argparse.ArgumentParser(description="autolink v2")
@@ -88,7 +89,21 @@ def soup2dict(soup, url="", verbose=False):
         result["title"] = sanitize_str(soup.title.string)
     if "title" in result:
         result["title"] = sanitize_str(result["title"])
+    result = tld_publisher(result)
     return result
+
+def tld_publisher(dictionary):
+    '''
+    Take a dict of metadata.  If the top-level domain is in a hard-coded
+    dictionary, use that to get the publisher instead of trying to extract it
+    from the web page HTML.  Return a new dict that differs at most by the
+    'publisher' field without affecting the input dict.
+    '''
+    domain = tld.get_tld(dictionary['url'])
+    res = dictionary.copy()
+    if domain in res:
+        res['publisher'] = publisher_map[domain]
+    return res
 
 def markdown_citation(dictionary, reference_style=False):
     cite_info = ""
