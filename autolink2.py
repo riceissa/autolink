@@ -89,7 +89,7 @@ def soup2dict(soup, url="", verbose=False):
         result["title"] = sanitize_str(soup.title.string)
     if "title" in result:
         result["title"] = sanitize_str(result["title"])
-    result = tld_publisher(result)
+    result = tld_publisher(result, verbose)
     return result
 
 def tld_publisher(dictionary, verbose=False):
@@ -99,11 +99,23 @@ def tld_publisher(dictionary, verbose=False):
     from the web page HTML.  Return a new dict that differs at most by the
     'publisher' field without affecting the input dict.
     '''
-    domain = tld.get_tld(dictionary['url'])
-    print('DOMAIN', domain, file=sys.stderr)
+    try:
+        domain = tld.get_tld(dictionary['url'])
+    except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound):
+        if verbose:
+            print('Bad TLD; trying with http:// prefix', file=sys.stderr)
+        try:
+            domain = tld.get_tld('http://' + dictionary['url'])
+        except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound):
+            if verbose:
+                print('Still bad TLD; giving up', file=sys.stderr)
+            domain = None
+    if verbose:
+        print('DOMAIN', domain, file=sys.stderr)
     res = dictionary.copy()
     if domain in publisher_map:
-        print('Setting domain because found in publisher_map')
+        if verbose:
+            print('Setting domain because found in publisher_map')
         res['publisher'] = publisher_map[domain]
     return res
 
