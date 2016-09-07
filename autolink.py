@@ -256,6 +256,7 @@ publisher_map = {
         "plos.org": "PLOS",
         "press.princeton.edu": "Princeton University Press",
         "princeton.edu": "Princeton University",
+        "quora.com": "Quora",
         "telegraph.co.uk": "The Telegraph",
         "theatlantic.com": "The Atlantic",
         "theguardian.com": "The Guardian",
