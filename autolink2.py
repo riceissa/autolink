@@ -3,6 +3,7 @@
 import argparse
 import sys
 import datetime
+import dateutil.parser
 from bs4 import BeautifulSoup
 import tld
 
@@ -90,7 +91,22 @@ def soup2dict(soup, url="", verbose=False):
     if "title" in result:
         result["title"] = sanitize_str(result["title"])
     result = tld_publisher(result, verbose)
+    result = convert_date(result, verbose)
     return result
+
+def convert_date(dictionary, verbose=False):
+    '''
+    Take a dict of metadata.  If a 'date' field exists, return a new dict with
+    a standardized date format.  Else return the same dictionary.  In any case,
+    do not modify the original dict.
+    '''
+    if "date" in dictionary:
+        date = dateutil.parser.parse(dictionary['date'])
+        res = dictionary.copy()
+        res['date'] = date.strftime("%B %-d, %Y")
+        return res
+    else:
+        return dictionary
 
 def tld_publisher(dictionary, verbose=False):
     '''
