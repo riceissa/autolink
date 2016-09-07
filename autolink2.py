@@ -154,7 +154,7 @@ def mediawiki_citation(dictionary):
         else:
             result += "|title=" + dictionary["title"] + " "
     if "publisher" in dictionary:
-        result += "|publisher=" + dictionary["publisher"] + " "
+        result += "|publisher=[[" + dictionary["publisher"] + "]] "
     result += "|accessdate=" + datetime.date.today().strftime("%B %-d, %Y")
     result = result.strip()
     result += "}}</ref>"
