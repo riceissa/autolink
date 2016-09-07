@@ -92,7 +92,7 @@ def soup2dict(soup, url="", verbose=False):
     result = tld_publisher(result)
     return result
 
-def tld_publisher(dictionary):
+def tld_publisher(dictionary, verbose=False):
     '''
     Take a dict of metadata.  If the top-level domain is in a hard-coded
     dictionary, use that to get the publisher instead of trying to extract it
@@ -100,8 +100,10 @@ def tld_publisher(dictionary):
     'publisher' field without affecting the input dict.
     '''
     domain = tld.get_tld(dictionary['url'])
+    print('DOMAIN', domain, file=sys.stderr)
     res = dictionary.copy()
-    if domain in res:
+    if domain in publisher_map:
+        print('Setting domain because found in publisher_map')
         res['publisher'] = publisher_map[domain]
     return res
 
