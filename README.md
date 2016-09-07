@@ -23,6 +23,10 @@ Below `%` indicates the shell prompt.
 
     % URL='http://googlewebmastercentral.blogspot.com/2013/04/5-common-mistakes-with-relcanonical.html' ; curl --silent --compressed -L "$URL" | ./autolink.py -f markdown -C "$URL"
     ["5 common mistakes with rel=canonical"](http://googlewebmastercentral.blogspot.com/2013/04/5-common-mistakes-with-relcanonical.html "“5 common mistakes with rel=canonical”. Official Google Webmaster Central Blog.")
+    % URL='http://predictionbook.com/predictions/8161'
+    % curl --silent --compressed -L $URL | \
+        ./autolink.py -f mediawiki -C $URL
+    <ref>{{cite web |url=http://predictionbook.com/predictions/8161 |title=PredictionBook: LSD: I will experience any kind of 'flashback' within 5 years. |accessdate=September 7, 2016}}</ref>
 
 ## Contributing
 
