@@ -1,297 +1,271 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 
 import argparse
-import io
-import logging
-import warnings
 import sys
-import requests
-import urllib3
-import tld
-from tld import get_tld
+import datetime
+import dateutil.parser
 from bs4 import BeautifulSoup
-import html
-import PyPDF2
-from PyPDF2 import PdfFileReader, PdfFileWriter
+import tld
 
 def main():
-    # See https://blog.quora.com/Launched-Customizable-Links for Quora's
-    # launch post
-    parser = argparse.ArgumentParser(description=("Get the linked title of " +
-        "URLs (similar to Quora and Facebook)"))
+    parser = argparse.ArgumentParser(description="autolink v2")
     parser.add_argument("url", type=str, help="the URL")
-    parser.add_argument("-f", "--format", type=str,
-            help=("output format; accepted values are 'none', 'html', " +
-            "'markdown', 'tex', 'latex', 'mediawiki'"))
-    parser.add_argument("-c", "--clean", action="store_true",
-            help=("clean the title to remove the site name " +
-            "if the title was obtained from an HTML title tag"))
-    parser.add_argument("-v", "--verbose", action="store_const",
-        dest="log_level", const=logging.DEBUG, help="enable debug messages")
+    parser.add_argument("-f", "--filetype", type=str,
+            help="output filetype")
+    parser.add_argument("-C", "--citation", action="store_true",
+            help="produce citation-style link instead of a hyperlink")
+    parser.add_argument("-R", "--reference", action="store_true",
+            help="produce a reference-style link for filetypes that support it")
+    parser.add_argument("-v", "--verbose", action="store_true",
+            help="enable debug messages")
     args = parser.parse_args()
-    logging.basicConfig(level=args.log_level)
-
-    url = args.url
-    logging.debug("Trying first attempt")
-    attempt_1 = try_url(url, args.format, clean=args.clean)
-    if attempt_1["exit"]:
-        logging.debug("First attempt succeeded!")
-        print(attempt_1["text"], end="")
+    if args.verbose:
+        print("ARGS", args, file=sys.stderr)
+    soup = BeautifulSoup(sys.stdin, "html.parser")
+    dictionary = soup2dict(soup, url=args.url, verbose=args.verbose)
+    if args.verbose:
+        print("DICTIONARY", dictionary, file=sys.stderr)
+    if args.filetype == "markdown":
+        if args.citation:
+            out = markdown_citation(dictionary, args.reference)
+        else:
+            out = markdown_hyperlink(dictionary, args.reference)
+    elif args.filetype == "mediawiki":
+        if args.citation:
+            out = mediawiki_citation(dictionary)
+        else:
+            out = mediawiki_hyperlink(dictionary)
+    elif args.filetype == "html":
+        out = html_hyperlink(dictionary)
     else:
-        logging.debug("First attempt failed; trying second attempt")
-        attempt_2 = try_url("http://" + url, args.format, clean=args.clean)
-        if attempt_2["exit"]:
-            logging.debug("Second attempt succeeded!")
-            print(attempt_2["text"], end="")
-        else:
-            logging.debug("Second attempted failed; using result " +
-                "from first attempt")
-            print(attempt_1["text"], end="")
+        out = plaintext_hyperlink(dictionary)
+    print(out, end="")
 
-def try_url(url, fmt, clean=False):
-    '''
-    Return (Str, True) if succeeded; (Str, False) otherwise.
-    '''
-    result = {}
-    analyte = analyze_url(url)
-    if analyte:
-        return {"text": analyte, "exit": True}
-    try:
-        user_agent = ("Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 " +
-            "Firefox/31.0 Iceweasel/31.5.0")
-        headers = {"User-Agent": user_agent}
-        response = requests.get(url, stream=True, headers=headers)
-        url = response.url
-        if  ("text/html" in response.headers["content-type"] or
-                "application/pdf" in response.headers["content-type"]):
-            logging.debug("HTML page or PDF file detected")
-            if "text/html" in response.headers["content-type"]:
-                # <title> is probably in the first around 10MB of HTML
-                # files, so we can download less here than in the case
-                # for PDFs
-                logging.debug("HTML detected")
-                doc = response.iter_content(chunk_size=10000)
-            else:
-                # PDFs might require more downloading
-                logging.debug("PDF detected")
-                doc = response.iter_content(chunk_size=1000000)
-            data = next(doc)
-            result["text"] = get_filetype_link(
-                get_link_text(url, response.headers["content-type"], data=data,
-                    clean=clean),
-                url,
-                fmt
-            )
-        else:
-            logging.debug("No HTML page detected")
-            result["text"] = get_filetype_link(
-                get_link_text(url, response.headers["content-type"]),
-                url,
-                fmt
-            )
-        result["exit"] = True
-    except (requests.exceptions.MissingSchema,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.InvalidSchema,
-            requests.exceptions.InvalidURL,
-            urllib3.exceptions.LocationParseError):
-        # since it's not a valid URL, just return it
-        result["text"] = url
-        result["exit"] = False
+def sanitize_str(s):
+    if isinstance(s, str):
+        # Remove nonprinting characters and newlines
+        return s.translate(dict.fromkeys(range(32)))
+    else:
+        print("yikes")
+        return ""
+
+def soup2dict(soup, url="", verbose=False):
+    """
+    Extract info from a BeautifulSoup soup into a dictionary.  Return a new
+    dictionary containing metadata fields. They keys that can be in the
+    dictionary are "url", "title", "author", "date", "publisher".
+    """
+    result = dict()
+    if url:
+        result["url"] = url
+    meta = soup.find_all("meta")
+    if verbose:
+        print(meta, file=sys.stderr)
+    for tag in meta:
+        if tag.get("property") == "og:title" and tag.get("content"):
+            result["title"] = sanitize_str(tag.get("content"))
+        elif tag.get("name") == "title":
+            result["title"] = sanitize_str(tag.get("content"))
+        elif tag.get("name") == "author":
+            result["author"] = sanitize_str(tag.get("content"))
+        elif tag.get("name") == "article:author_name" and ("author" not in
+                result):
+            result["author"] = sanitize_str(tag.get("content"))
+        elif tag.get("name") == "DCSext.author":
+            result["author"] = sanitize_str(tag.get("content"))
+        elif tag.get("name") == "dat":
+            result["date"] = sanitize_str(tag.get("content"))
+        if tag.get("property") == "og:site_name":
+            result["publisher"] = sanitize_str(tag.get("content"))
+        elif tag.get("name") == "cre":
+            result["publisher"] = sanitize_str(tag.get("content"))
+        elif tag.get("name") == "dcterms.date":
+            result["date"] = sanitize_str(tag.get("content"))
+        elif tag.get("property") == "article:published_time":
+            result["date"] = sanitize_str(tag.get("content"))
+        elif tag.get("property") == "article:modified_time" and ("date" not in
+                result):
+            result["date"] = (tag.get("content"))
+    if "title" not in result and soup.title is not None:
+        result["title"] = sanitize_str(soup.title.string)
+    if "title" in result:
+        result["title"] = sanitize_str(result["title"])
+    result = tld_publisher(result, verbose)
+    result = convert_date(result, verbose)
     return result
 
-def analyze_url(url):
-    """
-    Look just at the URL to see if a suitable title text can be found.  This
-    method is much faster than actually visiting the URL to find the title
-    element in the downloaded file. We want to do this for special sites like
-    Facebook, which doesn't allow anonymous downloading of certain pages, like
-    group pages.
+def convert_date(dictionary, verbose=False):
+    '''
+    Take a dict of metadata.  If a 'date' field exists, return a new dict with
+    a standardized date format.  Else return the same dictionary.  In any case,
+    do not modify the original dict.
+    '''
+    if "date" in dictionary:
+        date = dateutil.parser.parse(dictionary['date'])
+        res = dictionary.copy()
+        res['date'] = date.strftime("%B %-d, %Y")
+        return res
+    else:
+        return dictionary
 
-    Args:
-        url: A string that is a URL
-
-    Returns:
-        A string that is the title text to be used. If no suitable title text
-        can be produced, return the empty string, "".
-    """
+def tld_publisher(dictionary, verbose=False):
+    '''
+    Take a dict of metadata.  If the top-level domain is in a hard-coded
+    dictionary, use that to get the publisher instead of trying to extract it
+    from the web page HTML.  Return a new dict that differs at most by the
+    'publisher' field without affecting the input dict.
+    '''
     try:
-        tl = get_tld(url)
+        domain = tld.get_tld(dictionary['url'])
     except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound):
-        logging.debug("bad TLD; trying with http:// prefix")
+        if verbose:
+            print('Bad TLD; trying with http:// prefix', file=sys.stderr)
         try:
-            tl = get_tld("http://" + url)
+            domain = tld.get_tld('http://' + dictionary['url'])
         except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound):
-            logging.debug("still bad TLD; giving up")
-            return ""
-    if tl == "facebook.com" and "facebook.com/groups/" in url:
-            return "Facebook group page post"
-    return ""
+            if verbose:
+                print('Still bad TLD; giving up', file=sys.stderr)
+            domain = None
+    if verbose:
+        print('DOMAIN', domain, file=sys.stderr)
+    res = dictionary.copy()
+    if domain in publisher_map:
+        if verbose:
+            print('Setting domain because found in publisher_map')
+        res['publisher'] = publisher_map[domain]
+    return res
 
-def get_filetype_link(link_text, url, filetype):
-    """
-    Put the pieces together and produce a valid hyperlink for given output
-    filetype.
-
-    Args:
-        link_text: A string representing the displayed or linked text when
-            linking to something, e.g. "hello" in <a
-            href="http://example.org">hello<a>. This string should already be in
-            the intended form; i.e. all HTML escapes should have been unescaped
-            at this point.
-        url: A string of the URL.
-        filetype: A string of the output filetype. Accepted parameters are:
-            "none", "html", "markdown", "tex", "latex".
-
-    Returns:
-        A string that is a valid hyperlink for the specified output filetype.
-    """
-    if filetype == "markdown":
-        # From http://pandoc.org/README.html#backslash-escapes
-        # There is also the hyphen, "-", but I've removed that since
-        # escaping it just prevents em- and en-dashes from forming (and
-        # in most cases, this is what one wants)
-        special_chars = "\\`*_{}[]()>#+.!"
-        result = ""
-        for c in link_text:
-            if c in special_chars:
-                result += "\\" + c
-            else:
-                result += c
-        return "[{link_text}]({url})".format(link_text=result, url=url)
-    if filetype == "html":
-        return '<a href="{url}">{link_text}</a>'.format(url=url,
-                link_text=html.escape(link_text))
-    if filetype == "mediawiki":
-        return "[{url} {link_text}]".format(url=url,
-                link_text=link_text)
-    if filetype in ["latex", "tex"]:
-        # LaTeX is really sensitive about special characters so this
-        # probably needs a lot of tweaking
-        special_chars = "$&%{_#"
-        result = ""
-        for c in link_text:
-            if c in special_chars:
-                result += "\\" + c
-            elif c == "\\":
-                result += "\\textbackslash{}"
-            elif c == "~":
-                result += "\\textasciitilde{}"
-            else:
-                result += c
-        clean_url = ""
-        for c in url:
-            if c in special_chars or c in "~":
-                clean_url += "\\" + c
-            elif c == "\\":
-                clean_url += "{\\textbackslash}"
-            else:
-                clean_url += c
-        return ("\\href{%s}{%s}" % (clean_url, result))
+def markdown_citation(dictionary, reference_style=False):
+    cite_info = ""
+    if "author" in dictionary:
+        cite_info += dictionary["author"] + ". "
+    if "title" in dictionary:
+        cite_info += "“" + dictionary["title"] + "”" + ". "
+    if "publisher" in dictionary:
+        cite_info +=  dictionary["publisher"] + ". "
+    if "date" in dictionary:
+        date = get_date(dictionary)
+        cite_info += date + ". "
+    if cite_info:
+        cite_info = ' "' + cite_info.strip() + '"'
+    if reference_style:
+        base = '["{link_text}"][]\n\n[]: {url}{cite_info}'
     else:
-        return "{link_text}: {url}".format(url=url, link_text=link_text)
+        base = '["{link_text}"]({url}{cite_info})'
+    link_text = markdown_title(dictionary)
+    url = dictionary["url"]
+    return base.format(link_text=link_text, url=url, cite_info=cite_info)
 
-def get_link_text(url, mime_type, data=None, clean=False):
-    '''
-    Take URL, MIME type, and optional data to produce the link text.
-    '''
-    tld = get_tld(url)
-    result = "File on " + tld
-    if mime_type.startswith("image"):
-        result = "Image on " + tld
-    elif  "application/pdf" in mime_type:
-        logging.debug("PDF detected")
-        # I need seek() for some reason so convert from bytes
-        data = io.BytesIO(data)
-        # fix this later, but I always get a "PdfReadWarning: Xref table
-        # not zero-indexed" which should only happen when the -v flag is
-        # present
-        warnings.filterwarnings("ignore")
-        try:
-            pdf = PdfFileReader(data, strict=True)
-            # PyPDF2 somehow thinks many PDFs are encrypted with the empty
-            # string, so deal with that
-            if pdf.isEncrypted:
-                pdf.decrypt('')
-            result = pdf.getDocumentInfo().title
-            if not result or result.strip() == "":
-                result = "PDF on " + tld
-        except PyPDF2.utils.PdfReadError:
-            result = "PDF on " + tld
-    elif "text/html" in mime_type:
-        try:
-            soup = BeautifulSoup(data, 'html.parser')
-            meta = soup.find_all("meta")
-            og_title_lst = []
-            twitter_title_lst = []
-            meta_title_lst = []
-            schema_lst = []
-            for i in meta:
-                if i.get("property") == "og:title":
-                    og_title_lst.append(i.get("content"))
-                elif i.get("property") == "twitter:title":
-                    twitter_title_lst.append(i.get("content"))
-                elif i.get("name") == "title":
-                    meta_title_lst.append(i.get("content"))
-                elif i.get("itemprop") == "name":
-                    schema_lst.append(i.get("content"))
-            if og_title_lst:
-                logging.debug("found og:title")
-                result = og_title_lst[0].strip()
-            elif twitter_title_lst:
-                logging.debug("found twitter title")
-                result = twitter_title_lst[0].strip()
-            elif meta_title_lst:
-                logging.debug("found meta name title")
-                result = meta_title_lst[0].strip()
-                if clean:
-                    result = messy_title_parse(result, url)
-            elif schema_lst:
-                logging.debug("found schema title")
-                result = schema_lst[0].strip()
-            elif soup.title and soup.title.string:
-                logging.debug("found title tag")
-                result = html.unescape(soup.title.string)
-                if clean:
-                    result = messy_title_parse(result, url)
+def markdown_hyperlink(dictionary, reference_style=False):
+    url = dictionary["url"]
+    link_text = markdown_title(dictionary)
+    if reference_style:
+        base = '[{link_text}][]\n\n[]: {url}'
+    else:
+        base = "[{link_text}]({url})"
+    return base.format(link_text=link_text, url=url)
+
+def markdown_title(dictionary):
+    # Special characters to backslash-escape from
+    # http://pandoc.org/README.html#backslash-escapes . There is also the
+    # hyphen, "-", but I've removed that since escaping it just prevents em-
+    # and en-dashes from forming (and in most cases, one wants these fancy
+    # dashes).
+    special_chars = "\\`*_{}[]()>#+.!"
+    result = ""
+    if "title" in dictionary:
+        for c in dictionary["title"]:
+            if c in special_chars:
+                result += "\\" + c
             else:
-                logging.debug("no title found; using default")
-                result = "Page on " + tld
-        except AttributeError:
-            # Probably just empty title when trying to get
-            # soup.title.string
-            logging.debug("FIXME: this isn't supposed to happen")
-            result = "Page on " + tld
-    if len(result) > 255:
-        result = result[:253] + " …"
-
+                result += c
     return result
 
-def messy_title_parse(title, url=None):
-    # Even if nothing works, at least we'll have a whitespace-sanitized
-    # title
-    logging.debug("Cleaning messy title")
-    result = title.strip()
-    hyphen_split = result.split(" - ")
-    bar_split = result.split(" | ")
-    em_dash_split = result.split(" — ")
-    colon_split = result.split(": ")
-    if get_tld(url) in ["autoadmit.com", "xoxohth.com"]:
-        return " - ".join(hyphen_split[1:])
-    if len(hyphen_split) > 1:
-        # So there is actually more than one part, so we just take the
-        # first and we're done.  This is for titles like "Post Title -
-        # Site Name"
-        result = hyphen_split[0]
-    elif len(em_dash_split) > 1:
-        result = em_dash_split[0]
-    elif len(bar_split) > 1:
-        result = bar_split[0]
-    elif len(colon_split) > 1:
-        # For titles like "Site Name: Post Title"
-        result = colon_split[-1]
+def mediawiki_citation(dictionary):
+    url = dictionary["url"]
+    result = "<ref>{{cite web "
+    result += "|url=" + url + " "
+    title = ""
+    if ("publisher" in dictionary and "title" in dictionary and
+            dictionary["title"].endswith(" - " + dictionary["publisher"])):
+        title = title[:-len(" - " + publisher)]
+    if "author" in dictionary:
+        result += "|author=" + dictionary["author"] + " "
+    if "date" in dictionary:
+        result += "|date=" + dictionary["date"] + " "
+    if "title" in dictionary:
+        if title:
+            result += "|title=" + title + " "
+        else:
+            result += "|title=" + dictionary["title"] + " "
+    if "publisher" in dictionary:
+        result += "|publisher=[[" + dictionary["publisher"] + "]] "
+    result += "|accessdate=" + datetime.date.today().strftime("%B %-d, %Y")
+    result = result.strip()
+    result += "}}</ref>"
     return result
+
+def mediawiki_hyperlink(dictionary):
+    url = dictionary["url"]
+    if "title" in dictionary:
+        link_text = dictionary["title"]
+        return "[{url} {link_text}]".format(url=url, link_text=link_text)
+    else:
+        return url
+
+def html_citation(dictionary):
+    pass
+
+def html_hyperlink(dictionary):
+    if "title" in dictionary:
+        link_text = dictionary["title"]
+    else:
+        link_text = dictionary["url"]
+    return '<a href="{}">{}</a>'.format(dictionary["url"], link_text)
+
+def plaintext_citation(dictionary):
+    pass
+
+def plaintext_hyperlink(dictionary):
+    if "title" in dictionary:
+        return "{}: {}".format(dictionary["title"], dictionary["url"])
+    else:
+        return dictionary["url"]
+
+def get_date(dictionary):
+    if "date" in dictionary:
+        return dictionary["date"]
+
+publisher_map = {
+        "arstechnica.com": "Ars Technica",
+        "bloomberg.com": "Businessweek",
+        "bostonglobe.com": "The Boston Globe",
+        "econlog.econlib.org": "EconLog",
+        "economist.com": "The Economist",
+        "ft.com": "Financial Times",
+        "givewell.org": "GiveWell",
+        "huffingtonpost.ca": "Huffington Post Canada",
+        "huffingtonpost.com": "The Huffington Post",
+        "independent.co.uk": "The Independent",
+        "indiatimes.com": "The Times of India",
+        "latimes.com": "Los Angeles Times",
+        "lesswrong.com": "LessWrong",
+        "mirror.co.uk": "Mirror",
+        "nybooks.com": "The New York Review of Books",
+        "nytimes.com": "The New York Times",
+        "plos.org": "PLOS",
+        "press.princeton.edu": "Princeton University Press",
+        "princeton.edu": "Princeton University",
+        "telegraph.co.uk": "The Telegraph",
+        "theatlantic.com": "The Atlantic",
+        "theguardian.com": "The Guardian",
+        "theregister.co.uk": "The Register",
+        "usatoday.com": "USA Today",
+        "usnews.com": "U.S. News & World Report",
+        "washingtonpost.com": "The Washington Post",
+        "who.int": "World Health Organization",
+        "wsj.com": "The Wall Street Journal",
+}
 
 if __name__ == "__main__":
     main()
