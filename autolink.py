@@ -149,7 +149,7 @@ def markdown_citation(dictionary, reference_style=False):
     if cite_info:
         cite_info = ' "' + cite_info.strip() + '"'
     if reference_style:
-        base = '["{link_text}"][]\n\n[]: {url}{cite_info}'
+        base = '["{link_text}"][]\n[]: {url}{cite_info}'
     else:
         base = '["{link_text}"]({url}{cite_info})'
     link_text = markdown_title(dictionary)
@@ -160,7 +160,7 @@ def markdown_hyperlink(dictionary, reference_style=False):
     url = dictionary["url"]
     link_text = markdown_title(dictionary)
     if reference_style:
-        base = '[{link_text}][]\n\n[]: {url}'
+        base = '[{link_text}][]\n[]: {url}'
     else:
         base = "[{link_text}]({url})"
     return base.format(link_text=link_text, url=url)
