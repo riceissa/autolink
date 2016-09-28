@@ -243,6 +243,7 @@ publisher_map = {
         "bostonglobe.com": "The Boston Globe",
         "econlog.econlib.org": "EconLog",
         "economist.com": "The Economist",
+        "en.wikipedia.org": "English Wikipedia",
         "ft.com": "Financial Times",
         "givewell.org": "GiveWell",
         "huffingtonpost.ca": "Huffington Post Canada",
