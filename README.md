@@ -1,6 +1,11 @@
 # autolink
 automatically detect the title of a link
 
+**NOTE: I no longer use this script, and it is not maintained. Instead, I use
+[citewebgen](https://github.com/riceissa/citewebgen),
+which is a JavaScript version of this that works directly from the browser,
+and works as a bookmarklet.**
+
     usage: autolink.py [-h] [-f FILETYPE] [-C] [-R] [-v] url
 
     autolink v2
